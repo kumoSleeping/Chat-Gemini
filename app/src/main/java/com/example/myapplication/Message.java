@@ -1,8 +1,8 @@
 package com.example.myapplication;
 
 public class Message {
-    private String content;
-    private boolean isUserMessage;
+    private final String content;
+    private final boolean isUserMessage;
 
     public Message(String content, boolean isUserMessage) {
         this.content = content;

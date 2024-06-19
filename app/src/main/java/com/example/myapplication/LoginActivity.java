@@ -3,10 +3,11 @@ package com.example.myapplication;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -25,8 +26,6 @@ public class LoginActivity extends AppCompatActivity {
 
     private EditText usernameEditText;
     private EditText passwordEditText;
-    private Button loginButton;
-    private Button registerButton;
     private OkHttpClient client;
 
     @Override
@@ -36,8 +35,8 @@ public class LoginActivity extends AppCompatActivity {
 
         usernameEditText = findViewById(R.id.username);
         passwordEditText = findViewById(R.id.password);
-        loginButton = findViewById(R.id.login_button);
-        registerButton = findViewById(R.id.register_button);
+        Button loginButton = findViewById(R.id.login_button);
+        Button registerButton = findViewById(R.id.register_button);
         client = new OkHttpClient();
 
         // 限制用户名输入不支持换行
@@ -64,19 +63,20 @@ public class LoginActivity extends AppCompatActivity {
 
         client.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(Call call, IOException e) {
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 runOnUiThread(() -> Toast.makeText(LoginActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                 Log.e("LoginActivity", "Error during login request", e);
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (!response.isSuccessful()) {
                     runOnUiThread(() -> Toast.makeText(LoginActivity.this, "Login failed", Toast.LENGTH_SHORT).show());
                     Log.e("LoginActivity", "Login failed: " + response.code() + " " + response.message());
                     return;
                 }
 
+                assert response.body() != null;
                 String responseBody = response.body().string();
                 if ("success".equals(responseBody)) {
                     runOnUiThread(() -> {
@@ -107,10 +107,12 @@ public class LoginActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        RequestBody body = RequestBody.create(
-                MediaType.parse("application/json; charset=utf-8"),
-                jsonObject.toString()
-        );
+
+        MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
+
+
+        RequestBody body = RequestBody.create(jsonObject.toString().getBytes(), mediaType);
+
         Request request = new Request.Builder()
                 .url(url)
                 .post(body)
@@ -118,19 +120,20 @@ public class LoginActivity extends AppCompatActivity {
 
         client.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(Call call, IOException e) {
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 runOnUiThread(() -> Toast.makeText(LoginActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                 Log.e("LoginActivity", "Error during register request", e);
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (!response.isSuccessful()) {
                     runOnUiThread(() -> Toast.makeText(LoginActivity.this, "Register failed", Toast.LENGTH_SHORT).show());
                     Log.e("LoginActivity", "Register failed: " + response.code() + " " + response.message());
                     return;
                 }
 
+                assert response.body() != null;
                 String responseBody = response.body().string();
                 if ("success".equals(responseBody)) {
                     runOnUiThread(() -> Toast.makeText(LoginActivity.this, "Register successful", Toast.LENGTH_SHORT).show());

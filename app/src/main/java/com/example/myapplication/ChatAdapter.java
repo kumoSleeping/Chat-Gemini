@@ -9,6 +9,9 @@ import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+
 import io.noties.markwon.Markwon;
 import java.util.List;
 
@@ -21,8 +24,9 @@ public class ChatAdapter extends ArrayAdapter<Message> {
         this.markwon = Markwon.create(context);
     }
 
+    @NonNull
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         Message message = getItem(position);
 
         if (convertView == null) {
@@ -37,6 +41,7 @@ public class ChatAdapter extends ArrayAdapter<Message> {
         FrameLayout.LayoutParams userIconParams = (FrameLayout.LayoutParams) userIcon.getLayoutParams();
         FrameLayout.LayoutParams aiIconParams = (FrameLayout.LayoutParams) aiIcon.getLayoutParams();
 
+        assert message != null;
         if (message.isUserMessage()) {
             userIcon.setVisibility(View.VISIBLE);
             aiIcon.setVisibility(View.GONE);

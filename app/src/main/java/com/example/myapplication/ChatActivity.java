@@ -10,13 +10,14 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -30,9 +31,6 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Date;
-import java.text.SimpleDateFormat;
-import java.util.Locale;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -42,7 +40,6 @@ public class ChatActivity extends AppCompatActivity {
     private DatabaseHelper dbHelper;
     private ListView chatListView;
     private EditText messageEditText;
-    private ImageButton sendButton;
     private MessageAdapter messageAdapter;
     private List<Message> messages;
     private String currentTableName;
@@ -55,7 +52,7 @@ public class ChatActivity extends AppCompatActivity {
 
         chatListView = findViewById(R.id.chat_list_view);
         messageEditText = findViewById(R.id.message_edit_text);
-        sendButton = findViewById(R.id.send_button);
+        ImageButton sendButton = findViewById(R.id.send_button);
 
         messages = new ArrayList<>();
         messageAdapter = new MessageAdapter(this, messages);
@@ -69,7 +66,7 @@ public class ChatActivity extends AppCompatActivity {
         currentTableName = getLatestSessionTable();
         if (currentTableName == null) {
             // 如果没有找到任何会话表，创建一个新的会话表
-            currentTableName = "session_" + getCurrentFormattedDate();
+            currentTableName = "session_" + System.currentTimeMillis();
             dbHelper.createSessionTable(currentTableName);
         }
 
@@ -88,10 +85,10 @@ public class ChatActivity extends AppCompatActivity {
                     return true; // 处理了发送动作
                 } else if (event != null && event.getAction() == KeyEvent.ACTION_DOWN) {
                     if (event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+                        // 消费了事件，进行发送
                         if (event.isShiftPressed()) {
                             // 如果同时按下Shift键和回车键，允许换行
                             messageEditText.append("\n");
-                            return true; // 消费了事件，允许换行
                         } else {
                             // 只按下回车键，发送消息
                             String messageContent = messageEditText.getText().toString().replace("\n", "").trim();
@@ -99,8 +96,8 @@ public class ChatActivity extends AppCompatActivity {
                                 sendMessage(messageContent);
                                 messageEditText.setText("");
                             }
-                            return true; // 消费了事件，进行发送
                         }
+                        return true; // 消费了事件，允许换行
                     }
                 }
                 return false; // 没有消费事件
@@ -114,26 +111,6 @@ public class ChatActivity extends AppCompatActivity {
                 messageEditText.setText("");
             }
         });
-    }
-
-    // 获取当前格式化后的日期
-    private String getCurrentFormattedDate() {
-        try {
-            // 获取当前时间戳
-            long currentTimeMillis = System.currentTimeMillis();
-            // 创建Date对象
-            Date date = new Date(currentTimeMillis);
-            // 创建SimpleDateFormat对象
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm", Locale.US);
-            String formattedDate = sdf.format(date);
-            // 格式化日期
-            Log.d(TAG,"格式化日期时间: " + formattedDate);
-            return formattedDate;
-        }catch (Exception e){
-            Log.d(TAG, "错误日期", e);
-            return null;
-        }
-
     }
 
     @Override
@@ -192,7 +169,7 @@ public class ChatActivity extends AppCompatActivity {
         // 删除所有没有消息的会话表
         deleteEmptySessions();
 
-        currentTableName = "session_" + getCurrentFormattedDate();
+        currentTableName = "session_" + System.currentTimeMillis();
         dbHelper.createSessionTable(currentTableName);
         messages.clear();
         messageAdapter.notifyDataSetChanged();
@@ -253,10 +230,8 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         // 创建请求体
-        RequestBody body = RequestBody.create(
-                MediaType.parse("application/json; charset=utf-8"),
-                jsonObject.toString()
-        );
+        MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
+        RequestBody body = RequestBody.create(jsonObject.toString().getBytes(), mediaType);
 
         // 创建请求
         Request request = new Request.Builder()
@@ -267,7 +242,7 @@ public class ChatActivity extends AppCompatActivity {
         // 发送请求
         client.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(Call call, IOException e) {
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 runOnUiThread(() -> {
                     Toast.makeText(ChatActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "Error sending message", e);
@@ -275,13 +250,14 @@ public class ChatActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (!response.isSuccessful()) {
                     runOnUiThread(() -> Toast.makeText(ChatActivity.this, "Error: " + response.message(), Toast.LENGTH_SHORT).show());
                     return;
                 }
 
                 try {
+                    assert response.body() != null;
                     String jsonResponse = response.body().string();
                     Log.d(TAG, "Server response: " + jsonResponse);
                     JSONObject jsonObject = new JSONObject(jsonResponse);
@@ -345,7 +321,7 @@ public class ChatActivity extends AppCompatActivity {
             loadHistory();
         } else {
             // 如果没有找到任何会话表，创建一个新的会话表
-            currentTableName = "session_" + getCurrentFormattedDate();
+            currentTableName = "session_" + System.currentTimeMillis();
             dbHelper.createSessionTable(currentTableName);
             messages.clear();
             messageAdapter.notifyDataSetChanged();

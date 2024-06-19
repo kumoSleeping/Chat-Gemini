@@ -9,6 +9,9 @@ import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+
 import java.util.List;
 import io.noties.markwon.Markwon;
 
@@ -18,11 +21,12 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 
     public MessageAdapter(Context context, List<Message> messages) {
         super(context, 0, messages);
-        this.markwon = Markwon.create(context); // 初始化 Markwon
+        this.markwon = Markwon.create(context); // 初始化 Markdown
     }
 
+    @NonNull
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         Message message = getItem(position);
 
         if (convertView == null) {
@@ -37,6 +41,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         FrameLayout.LayoutParams userIconParams = (FrameLayout.LayoutParams) userIcon.getLayoutParams();
         FrameLayout.LayoutParams aiIconParams = (FrameLayout.LayoutParams) aiIcon.getLayoutParams();
 
+        assert message != null;
         if (message.isUserMessage()) {
             userIcon.setVisibility(View.VISIBLE);
             aiIcon.setVisibility(View.GONE);
@@ -55,7 +60,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         userIcon.setLayoutParams(userIconParams);
         aiIcon.setLayoutParams(aiIconParams);
 
-        // 使用 Markwon 渲染 Markdown 内容
+        // 使用 Markdown 渲染 Markdown 内容
         markwon.setMarkdown(textView, message.getContent());
 
         return convertView;

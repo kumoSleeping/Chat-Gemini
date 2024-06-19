@@ -3,14 +3,13 @@ package com.example.myapplication;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final int DATABASE_VERSION = 1;
-    private SQLiteDatabase db;
+    private final SQLiteDatabase db;
 
     public DatabaseHelper(Context context, String databaseName) {
         super(context, databaseName, null, DATABASE_VERSION);
