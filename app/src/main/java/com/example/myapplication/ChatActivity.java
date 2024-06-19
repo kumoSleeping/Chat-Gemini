@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -29,6 +30,9 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -65,7 +69,7 @@ public class ChatActivity extends AppCompatActivity {
         currentTableName = getLatestSessionTable();
         if (currentTableName == null) {
             // 如果没有找到任何会话表，创建一个新的会话表
-            currentTableName = "session_" + System.currentTimeMillis();
+            currentTableName = "session_" + getCurrentFormattedDate();
             dbHelper.createSessionTable(currentTableName);
         }
 
@@ -110,6 +114,26 @@ public class ChatActivity extends AppCompatActivity {
                 messageEditText.setText("");
             }
         });
+    }
+
+    // 获取当前格式化后的日期
+    private String getCurrentFormattedDate() {
+        try {
+            // 获取当前时间戳
+            long currentTimeMillis = System.currentTimeMillis();
+            // 创建Date对象
+            Date date = new Date(currentTimeMillis);
+            // 创建SimpleDateFormat对象
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm", Locale.US);
+            String formattedDate = sdf.format(date);
+            // 格式化日期
+            Log.d(TAG,"格式化日期时间: " + formattedDate);
+            return formattedDate;
+        }catch (Exception e){
+            Log.d(TAG, "错误日期", e);
+            return null;
+        }
+
     }
 
     @Override
@@ -168,7 +192,7 @@ public class ChatActivity extends AppCompatActivity {
         // 删除所有没有消息的会话表
         deleteEmptySessions();
 
-        currentTableName = "session_" + System.currentTimeMillis();
+        currentTableName = "session_" + getCurrentFormattedDate();
         dbHelper.createSessionTable(currentTableName);
         messages.clear();
         messageAdapter.notifyDataSetChanged();
@@ -296,8 +320,8 @@ public class ChatActivity extends AppCompatActivity {
         Cursor cursor = dbHelper.getAllMessages(currentTableName);
         if (cursor != null) {
             while (cursor.moveToNext()) {
-                String userMessage = cursor.getString(cursor.getColumnIndex("user_message"));
-                String serverMessage = cursor.getString(cursor.getColumnIndex("server_message"));
+                @SuppressLint("Range") String userMessage = cursor.getString(cursor.getColumnIndex("user_message"));
+                @SuppressLint("Range") String serverMessage = cursor.getString(cursor.getColumnIndex("server_message"));
 
                 if (userMessage != null) {
                     messages.add(new Message(userMessage, true));
@@ -321,7 +345,7 @@ public class ChatActivity extends AppCompatActivity {
             loadHistory();
         } else {
             // 如果没有找到任何会话表，创建一个新的会话表
-            currentTableName = "session_" + System.currentTimeMillis();
+            currentTableName = "session_" + getCurrentFormattedDate();
             dbHelper.createSessionTable(currentTableName);
             messages.clear();
             messageAdapter.notifyDataSetChanged();
